@@ -151,7 +151,7 @@ final class Verifier
                 throw \Auth0\SDK\Exception\InvalidTokenException::requiresClientSecret();
             }
 
-            $hash = hash_hmac('sha256', $this->payload, $this->clientSecret, true);
+            $hash = hash_hmac('sha256', $this->payload, self::urlsafeB64Decode($this->clientSecret), true);
             $valid = hash_equals($this->signature, $hash);
 
             if (! $valid) {
@@ -162,6 +162,23 @@ final class Verifier
         }
 
         throw \Auth0\SDK\Exception\InvalidTokenException::unsupportedSigningAlgorithm((string) $alg);
+    }
+
+    /**
+     * Decode a string with URL-safe Base64.
+     *
+     * @param string $input A Base64 encoded string
+     *
+     * @return string A decoded string
+     */
+    public static function urlsafeB64Decode($input)
+    {
+        $remainder = \strlen($input) % 4;
+        if ($remainder) {
+            $padlen = 4 - $remainder;
+            $input .= \str_repeat('=', $padlen);
+        }
+        return \base64_decode(\strtr($input, '-_', '+/'));
     }
 
     /**
